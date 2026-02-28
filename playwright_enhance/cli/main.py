@@ -470,6 +470,164 @@ def config_validate(filepath: str):
 
 
 @cli.command()
+@click.argument('url')
+@click.option('-b', '--browser', type=click.Choice(['chromium', 'firefox', 'webkit']), 
+              default='chromium', help='Browser to use')
+@click.option('--enhanced/--native', default=False, help='Use enhanced Playwright')
+@click.option('--headless/--headed', default=True, help='Run in headless mode')
+@click.option('-o', '--output', 'output_file', type=str, help='Output file (YAML/JSON)')
+@click.option('--format', 'output_format', type=click.Choice(['yaml', 'json']), default='yaml', 
+              help='Output format')
+@click.option('--session', help='Session ID for multi-step testing')
+def inspect(url: str, browser: str, enhanced: bool, headless: bool, 
+            output_file: Optional[str], output_format: str, session: Optional[str]):
+    """
+    Inspect page and extract interactive elements.
+    
+    Returns structured data (YAML/JSON) with element IDs for interaction.
+    
+    Examples:
+        playwright-enhance-cli inspect https://news.ycombinator.com
+        playwright-enhance-cli inspect https://github.com -o elements.yaml --enhanced
+    """
+    async def run_inspect():
+        async with async_playwright() as p:
+            browser_type = getattr(p, browser)
+            browser_obj = await browser_type.launch(headless=headless)
+            
+            if enhanced:
+                cfg = Config()
+                cfg.set('smart_waiting.enabled', True)
+                cfg.set('smart_waiting.initial_timeout', 3000)
+                cfg.set('smart_waiting.max_timeout', 15000)
+                browser_obj = enhance(browser_obj, cfg.to_dict())
+            
+            page = await browser_obj.new_page()
+            
+            if enhanced:
+                cfg = Config()
+                cfg.set('smart_waiting.initial_timeout', 3000)
+                cfg.set('smart_waiting.max_timeout', 15000)
+                plugin = SmartWaitingPlugin(cfg.get('smart_waiting'))
+                page.register_plugin('smart_waiting', plugin)
+                page.enable_plugin('smart_waiting')
+            
+            start_time = time.time()
+            await page.goto(url)
+            load_time = time.time() - start_time
+            
+            # 提取页面信息
+            data = {
+                'url': url,
+                'title': await page.title(),
+                'load_time': round(load_time, 3),
+                'enhanced': enhanced,
+                'session': session or str(int(time.time())),
+                'elements': []
+            }
+            
+            # 提取链接
+            links = await page.locator('a[href]').all()
+            for idx, link in enumerate(links[:50]):  # 最多50个
+                try:
+                    text = (await link.text_content() or '').strip()[:50]
+                    href = await link.get_attribute('href')
+                    if text and href:
+                        data['elements'].append({
+                            'id': f'e{idx+1}',
+                            'type': 'link',
+                            'text': text,
+                            'href': href,
+                            'selector': f'a[href="{href}"]'
+                        })
+                except:
+                    pass
+            
+            # 提取按钮
+            buttons = await page.locator('button').all()
+            btn_idx = len(data['elements']) + 1
+            for idx, btn in enumerate(buttons[:20]):  # 最多20个
+                try:
+                    text = (await btn.text_content() or '').strip()[:50]
+                    if text:
+                        data['elements'].append({
+                            'id': f'e{btn_idx + idx}',
+                            'type': 'button',
+                            'text': text,
+                            'selector': f'button:has-text("{text}")'
+                        })
+                except:
+                    pass
+            
+            # 提取输入框
+            inputs = await page.locator('input').all()
+            input_idx = len(data['elements']) + 1
+            for idx, inp in enumerate(inputs[:20]):  # 最多20个
+                try:
+                    inp_type = await inp.get_attribute('type') or 'text'
+                    name = await inp.get_attribute('name') or ''
+                    placeholder = await inp.get_attribute('placeholder') or ''
+                    data['elements'].append({
+                        'id': f'e{input_idx + idx}',
+                        'type': 'input',
+                        'input_type': inp_type,
+                        'name': name,
+                        'placeholder': placeholder,
+                        'selector': f'input[name="{name}"]' if name else f'input[type="{inp_type}"]'
+                    })
+                except:
+                    pass
+            
+            await browser_obj.close()
+            
+            # 输出
+            if output_format == 'yaml':
+                import yaml
+                output_str = yaml.dump(data, allow_unicode=True, sort_keys=False)
+            else:
+                import json
+                output_str = json.dumps(data, indent=2, ensure_ascii=False)
+            
+            if output_file:
+                import pathlib
+                pathlib.Path(output_file).write_text(output_str, encoding='utf-8')
+                click.echo(f"✓ Saved to: {output_file}")
+            else:
+                click.echo(output_str)
+    
+    asyncio.run(run_inspect())
+
+
+@cli.command()
+@click.argument('element_id')
+@click.option('--session', required=True, help='Session ID from inspect command')
+@click.option('--action', type=click.Choice(['click', 'fill', 'check']), 
+              default='click', help='Action to perform')
+@click.option('--value', help='Value for fill action')
+@click.option('-o', '--output', 'output_file', type=str, help='Output file (YAML/JSON)')
+@click.option('--format', 'output_format', type=click.Choice(['yaml', 'json']), default='yaml')
+def interact(element_id: str, session: str, action: str, value: Optional[str], 
+             output_file: Optional[str], output_format: str):
+    """
+    Interact with element from inspect output.
+    
+    Examples:
+        playwright-enhance-cli interact e1 --session 1234567890
+        playwright-enhance-cli interact e5 --session abc --action fill --value "hello"
+        playwright-enhance-cli interact e10 --session abc --action check
+    """
+    # TODO: 实现会话管理和元素交互
+    # 这需要一个持久化的会话系统来保持浏览器状态
+    click.echo(f"⚠️  Interactive mode coming soon!")
+    click.echo(f"    Element: {element_id}")
+    click.echo(f"    Session: {session}")
+    click.echo(f"    Action: {action}")
+    if value:
+        click.echo(f"    Value: {value}")
+    sys.exit(1)
+
+
+@cli.command()
 def uninstall():
     """
     Uninstall Playwright browsers (proxy to playwright uninstall).
