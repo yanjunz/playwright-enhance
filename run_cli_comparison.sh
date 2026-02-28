@@ -48,7 +48,7 @@ echo ""
 read -p "请输入模式 (1-2): " mode_choice
 
 if [ "$mode_choice" = "1" ]; then
-    MODE="--headed"
+    MODE="--visible"
     MODE_TEXT="可见模式"
 else
     MODE="--headless"
