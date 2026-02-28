@@ -9,6 +9,8 @@
 
 ## 🚀 Quick Start
 
+### Python API
+
 ```python
 from playwright.async_api import async_playwright
 from playwright_enhance import enhance
@@ -24,6 +26,24 @@ async with async_playwright() as p:
     page = await enhanced.new_page()
     await page.goto('https://example.com')  # Adaptive timeout instead of fixed 30s!
 ```
+
+### CLI Tool
+
+```bash
+# 性能基准测试
+playwright-enhance-cli benchmark https://example.com
+
+# 对比增强版 vs 原生版
+playwright-enhance-cli compare https://example.com --runs 5
+
+# 生成配置文件
+playwright-enhance-cli config init config.json --minimal
+
+# 查看系统信息
+playwright-enhance-cli info
+```
+
+📖 **CLI 完整指南**: [docs/cli-guide.md](docs/cli-guide.md)
 
 ## 🎯 Why Playwright-Enhance?
 
@@ -132,6 +152,10 @@ python examples/bilibili_comparison.py --demo
   - Transparent wrapper
   - Plugin system
   - Multi-source configuration
+- **CLI Tool** - Command-line utilities
+  - Performance benchmarking
+  - Enhanced vs native comparison
+  - Configuration management
 - **Test Coverage** - 56 tests passing, 83% coverage
 
 ### 🚧 Coming Soon
@@ -141,7 +165,6 @@ python examples/bilibili_comparison.py --demo
 - **Concurrent Engine** - Parallel operation execution
 - **Cache System** - Three-level caching for repeated operations
 - **Performance Monitor** - Real-time metrics and profiling
-- **CLI Tool** - Command-line interface (`playwright-enhance-cli`)
 
 ## 📦 Installation
 
@@ -160,6 +183,7 @@ pip install -e ".[dev]"
 ## 📚 Documentation
 
 - **[Quick Start](docs/quick-start.md)** - Get started in 5 minutes
+- **[CLI Guide](docs/cli-guide.md)** - Command-line tool usage
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
 - **[Performance Guide](docs/performance.md)** - Optimization tips
 - **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Current progress (22/159 tasks)
@@ -241,7 +265,9 @@ playwright_enhance/
 │   ├── multi_locator.py # 🚧 TODO
 │   ├── ai_api.py        # 🚧 TODO
 │   └── ...
-└── cli/                 # 🚧 Command-line tool (TODO)
+└── cli/                 # ✅ Command-line tool (implemented)
+    ├── main.py          # CLI commands
+    └── __init__.py
 ```
 
 ## 🤝 Contributing
