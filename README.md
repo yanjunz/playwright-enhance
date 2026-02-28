@@ -182,10 +182,19 @@ pip install -e ".[dev]"
 
 ## 📚 Documentation
 
+### Getting Started
 - **[Quick Start](docs/quick-start.md)** - Get started in 5 minutes
-- **[CLI Guide](docs/cli-guide.md)** - Command-line tool usage
+- **[CLI Quick Start](CLI_QUICKSTART.md)** - CLI tool quick reference
+
+### CLI Tools
+- **[CLI Guide](docs/cli-guide.md)** - Complete CLI usage guide
+- **[CLI Tools Overview](CLI_TOOLS_OVERVIEW.md)** - All CLI tools at a glance
+- **[CLI Comparison Guide](CLI_COMPARISON_GUIDE.md)** - Performance testing guide
+
+### Advanced
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
 - **[Performance Guide](docs/performance.md)** - Optimization tips
+- **[Real Test Guide](REAL_TEST_GUIDE.md)** - Real-world testing scenarios
 - **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Current progress (22/159 tasks)
 
 ## 🔧 Usage Examples
@@ -312,7 +321,7 @@ See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for detailed progress.
 - [ ] Concurrent engine
 - [ ] Cache system
 - [ ] Performance monitor
-- [ ] CLI tool
+- [x] CLI tool
 
 ### v1.0.0
 - [ ] Full test coverage (>90%)
