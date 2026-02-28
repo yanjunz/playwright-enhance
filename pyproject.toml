@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "playwright-enhance"
+version = "0.1.0"
+description = "Performance-enhanced Playwright wrapper for AI agents like OpenClaw"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Playwright Enhance Team"}
+]
+keywords = ["playwright", "browser", "automation", "ai", "agent", "openclaw", "performance"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "playwright>=1.40.0",
+    "opencv-python-headless>=4.8.0",
+    "pyyaml>=6.0",
+    "click>=8.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.7.0",
+    "mypy>=1.4.0",
+    "pre-commit>=3.3.0",
+    "ruff>=0.0.282",
+]
+
+[project.scripts]
+playwright-enhance-cli = "playwright_enhance.cli.main:cli"
+
+[project.urls]
+Homepage = "https://github.com/playwright-enhance/playwright-enhance"
+Documentation = "https://playwright-enhance.readthedocs.io"
+Repository = "https://github.com/playwright-enhance/playwright-enhance"
+"Bug Tracker" = "https://github.com/playwright-enhance/playwright-enhance/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["playwright_enhance*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I", "N", "UP", "YTT", "ANN", "S", "BLE", "B", "A", "COM", "C4", "DTZ", "T10", "ISC", "ICN", "G", "INP", "PIE", "T20", "PT", "Q", "RSE", "RET", "SIM", "TID", "ARG", "ERA", "PD", "PGH", "PL", "TRY", "NPY", "RUF"]
+ignore = ["ANN101", "ANN102"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=playwright_enhance --cov-report=term-missing --cov-report=html"

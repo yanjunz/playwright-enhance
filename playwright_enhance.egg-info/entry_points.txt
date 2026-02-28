@@ -1,0 +1,2 @@
+[console_scripts]
+playwright-enhance-cli = playwright_enhance.cli.main:cli
