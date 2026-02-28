@@ -52,10 +52,22 @@ Playwright-Enhance is available for **Python** (more languages coming soon).
 
 ### Installation
 
+> **⚠️ Note**: Currently in **Alpha** stage. Not yet published to PyPI.
+
 ```bash
-pip install playwright-enhance
+# Install from source (recommended for now)
+git clone https://github.com/yourusername/playwright-enhance
+cd playwright-enhance
+pip install -e .
+
+# Or install from GitHub directly
+pip install git+https://github.com/yourusername/playwright-enhance.git
+
+# Install browser
 playwright install chromium
 ```
+
+📖 **[Full installation guide](docs/distribution-guide.md)** - All installation methods
 
 ### Python API
 
@@ -170,17 +182,33 @@ python examples/real_hackernews_test.py --visible --order native-first
 
 ## 📦 Installation
 
+> **⚠️ Alpha Stage**: Not yet published to PyPI. See [Distribution Guide](docs/distribution-guide.md) for all installation methods.
+
+**Current install options**:
+
 ```bash
-pip install playwright-enhance
+# Option 1: From source (recommended)
+git clone https://github.com/yourusername/playwright-enhance
+cd playwright-enhance
+pip install -e .
+playwright install chromium
+
+# Option 2: From GitHub (one-line)
+pip install git+https://github.com/yourusername/playwright-enhance.git
 playwright install chromium
 ```
 
-Development install:
+**For development**:
+
 ```bash
 git clone https://github.com/yourusername/playwright-enhance
 cd playwright-enhance
 pip install -e ".[dev]"
+playwright install chromium
+pre-commit install
 ```
+
+📖 **[Full installation guide](docs/distribution-guide.md)** - Offline install, Docker, CI/CD, and more
 
 ---
 
@@ -339,6 +367,7 @@ python examples/real_wikipedia_test.py --visible
 - **[Documentation](docs/)** - Full documentation
 - **[Python API Reference](docs/api-reference.md)** - Complete API docs
 - **[CLI Guide](docs/cli-guide.md)** - Command-line tools
+- **[Distribution Guide](docs/distribution-guide.md)** - Installation & packaging ⭐
 - **[Performance Guide](docs/performance.md)** - Optimization tips
 - **[Comparison Guide](docs/comparison-guide.md)** - vs Playwright benchmarks
 - **[Contributing](CONTRIBUTING.md)** - How to contribute
