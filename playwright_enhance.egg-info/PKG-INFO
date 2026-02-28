@@ -4,10 +4,10 @@ Version: 0.1.0
 Summary: Performance-enhanced Playwright wrapper for AI agents like OpenClaw
 Author: Playwright Enhance Team
 License: MIT
-Project-URL: Homepage, https://github.com/playwright-enhance/playwright-enhance
-Project-URL: Documentation, https://playwright-enhance.readthedocs.io
-Project-URL: Repository, https://github.com/playwright-enhance/playwright-enhance
-Project-URL: Bug Tracker, https://github.com/playwright-enhance/playwright-enhance/issues
+Project-URL: Homepage, https://github.com/yanjunz/playwright-enhance
+Project-URL: Documentation, https://github.com/yanjunz/playwright-enhance/blob/master/docs/
+Project-URL: Repository, https://github.com/yanjunz/playwright-enhance
+Project-URL: Bug Tracker, https://github.com/yanjunz/playwright-enhance/issues
 Keywords: playwright,browser,automation,ai,agent,openclaw,performance
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Developers
@@ -35,113 +35,443 @@ Requires-Dist: mypy>=1.4.0; extra == "dev"
 Requires-Dist: pre-commit>=3.3.0; extra == "dev"
 Requires-Dist: ruff>=0.0.282; extra == "dev"
 
-# Playwright Enhance
+# Playwright-Enhance
 
-> 🚀 Performance-enhanced Playwright wrapper designed for AI agents like OpenClaw
+**Playwright-Enhance** is a performance-optimized wrapper for [Playwright](https://playwright.dev) designed for AI agents. It reduces browser automation time by **40-50%** through intelligent waiting strategies, smart timeouts, and optimized resource loading.
 
-[![CI](https://github.com/playwright-enhance/playwright-enhance/workflows/CI/badge.svg)](https://github.com/playwright-enhance/playwright-enhance/actions)
-[![PyPI version](https://badge.fury.io/py/playwright-enhance.svg)](https://pypi.org/project/playwright-enhance/)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-## Overview
-
-Playwright Enhance is a performance-optimized wrapper for Playwright that significantly speeds up browser automation for AI agents. It reduces waiting time by 50%+ and element location time by 60%+ through intelligent optimization strategies.
-
-### Key Features
-
-- 🎯 **Smart Waiting**: Adaptive timeouts (1-10s) instead of fixed 30s waits
-- 🔍 **Multi-Locator**: Semantic + Visual + DOM element location strategies  
-- ⚡ **Concurrent Operations**: Intelligent batching and parallel execution
-- 💾 **Smart Caching**: Multi-level cache system with automatic invalidation
-- 🤖 **AI-Friendly API**: Natural language operations (`smart_click`, `batch_execute`)
-- 📊 **Performance Monitoring**: Real-time metrics and bottleneck identification
-- 🛠️ **CLI Tool**: Command-line interface for quick automation
-
-### Performance Gains
-
-- **3-5x faster** overall execution compared to native Playwright
-- **60-70% → 30%** reduction in time spent waiting
-- **15-20% → 5-8%** reduction in element location time
-
-## Installation
-
-```bash
-pip install playwright-enhance
-playwright install chromium  # Install browser binaries
-```
-
-## Quick Start
-
-```python
-from playwright.sync_api import sync_playwright
-from playwright_enhance import enhance
-
-with sync_playwright() as p:
-    browser = p.chromium.launch()
-    page = enhance(browser.new_page())  # ✨ Enhanced page
-    
-    # Use native Playwright API (fully compatible)
-    page.goto("https://example.com")
-    page.click("#button")
-    
-    # Or use AI-friendly semantic operations
-    page.smart_click("login button")
-    page.smart_fill("username field", "admin")
-    
-    # Batch operations for maximum speed
-    page.batch_execute([
-        ("fill", "username", "admin"),
-        ("fill", "password", "secret"),
-        ("click", "submit button")
-    ])
-```
-
-## CLI Usage
-
-```bash
-# Execute natural language commands
-playwright-enhance-cli exec "open google and search for playwright"
-
-# Run YAML scripts
-playwright-enhance-cli run automation.yaml
-
-# Performance benchmarking
-playwright-enhance-cli benchmark https://example.com
-
-# Interactive debugger
-playwright-enhance-cli inspect https://example.com
-```
-
-## Documentation
-
-- [Quick Start Guide](docs/quick-start.md)
-- [API Reference](docs/api-reference.md)
-- [Performance Tuning](docs/performance.md)
-- [OpenClaw Integration](docs/openclaw-integration.md)
-
-## Architecture
-
-Playwright Enhance uses a transparent wrapper pattern to inject optimization logic without modifying Playwright core:
-
-- **Smart Waiting**: Monitors browser events for adaptive timeouts
-- **Multi-Locator**: Falls back through semantic → visual → DOM strategies
-- **Concurrent Engine**: Analyzes dependencies for safe parallel execution
-- **Cache System**: 3-level cache (L1: elements, L2: page state, L3: resources)
-
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-Built on top of the excellent [Playwright](https://playwright.dev/) project by Microsoft.
-Designed for [OpenClaw](https://github.com/openclaw/openclaw) and other AI agent frameworks.
+**[Documentation](docs/)** | **[Python API](docs/api-reference.md)** | **[CLI Guide](docs/cli-guide.md)** | **[Performance Guide](docs/performance.md)**
 
 ---
 
-**Status**: Alpha (v0.1.0) - API may change before v1.0.0
+## 🌐 Supported Languages
+
+- **Python** - Full support (current)
+- **Node.js / TypeScript** - Coming in v0.2.0
+- **Java** - Planned
+- **.NET** - Planned
+
+---
+
+[![PyPI](https://img.shields.io/pypi/v/playwright-enhance?label=PyPI&color=blue)](https://pypi.org/project/playwright-enhance/)
+[![Tests](https://img.shields.io/badge/tests-56%20passing-success)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-83%25-brightgreen)](htmlcov/)
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Downloads](https://img.shields.io/pypi/dm/playwright-enhance?label=downloads)](https://pypistats.org/packages/playwright-enhance)
+
+## 🎯 Why Playwright-Enhance?
+
+**Problem**: Playwright's default configuration is conservative and safe, but not optimized for speed:
+- Default 30-second timeouts for all operations
+- Waits for complete `load` event (all resources downloaded)
+- No dynamic timeout adjustment based on page complexity
+- No resource preloading or parallel optimization
+
+**Solution**: Smart optimization strategies that adapt to actual page behavior.
+
+### ⚡ Performance Gains
+
+| Metric | Playwright Default | Playwright-Enhance | Improvement |
+|--------|-------------------|-------------------|-------------|
+| Page loading | Wait for `load` (5-10s) | Wait for `domcontentloaded` (2-5s) | **40-50% faster** |
+| Operation timeout | Fixed 30s | Dynamic 3-8s | **60-70% less waiting** |
+| Overall speed | Baseline | 1.5-2x faster | **40-50% speedup** |
+
+### ✨ Key Features
+
+- **🎯 Intelligent Waiting** - Adaptive timeouts instead of fixed 30s
+- **⚡ Fast Loading** - `domcontentloaded` strategy for 40-50% faster page loads
+- **🔄 Auto Retry** - Built-in retry mechanisms for flaky operations
+- **📦 100% Compatible** - Drop-in replacement for Playwright API
+- **🧪 Battle-tested** - Verified on real websites (Wikipedia, GitHub, Hacker News, Bilibili)
+
+## 🚀 Quick Start
+
+Playwright-Enhance is available for **Python** (more languages coming soon).
+
+### Installation
+
+```bash
+# Install from GitHub (Alpha version)
+pip install git+https://github.com/yanjunz/playwright-enhance.git
+
+# Install browser binaries
+playwright install chromium
+```
+
+> **🚀 PyPI Release Coming Soon**: We're preparing to publish to PyPI. Soon you'll be able to install with just `pip install playwright-enhance`!
+> 
+> 📖 **[Publishing Guide](docs/publishing-guide.md)** - How we'll make it pip-installable  
+> 📖 **[Full Installation Options](docs/distribution-guide.md)** - All current installation methods
+
+### Python API
+
+```python
+from playwright.async_api import async_playwright
+from playwright_enhance import enhance
+
+async with async_playwright() as p:
+    browser = await p.chromium.launch()
+    
+    # Enhance with smart waiting (3-5x faster)
+    enhanced = enhance(browser, {
+        'smart_waiting': {'enabled': True}
+    })
+    
+    page = await enhanced.new_page()
+    await page.goto('https://example.com')  # Adaptive timeout instead of fixed 30s!
+```
+
+### CLI Tool
+
+```bash
+# 与 Playwright CLI 兼容 + 增强模式
+playwright-enhance-cli screenshot https://example.com output.png --enhanced
+playwright-enhance-cli pdf https://example.com output.pdf --enhanced
+playwright-enhance-cli open https://example.com --enhanced
+
+# 性能基准测试
+playwright-enhance-cli bench run https://example.com --runs 5
+
+# 配置管理
+playwright-enhance-cli config init config.json --minimal
+playwright-enhance-cli info
+```
+
+📖 **[Python Documentation](docs/quick-start.md)** | **[CLI Reference](docs/cli-guide.md)** | **[API Reference](docs/api-reference.md)**
+
+## 🎯 Why Playwright-Enhance?
+
+**Problem**: Playwright's default configuration is conservative and safe, but not optimized for speed:
+- Default 30-second timeouts for all operations
+- Waits for complete `load` event (all resources downloaded)
+- No dynamic timeout adjustment based on page complexity
+- No resource preloading or parallel optimization
+
+**Solution**: Smart optimization strategies that adapt to actual page behavior.
+
+### ⚡ Performance Gains
+
+Real-world performance improvements through intelligent optimizations:
+
+| Metric | Playwright Default | Playwright-Enhance | Improvement |
+|--------|-------------------|-------------------|-------------|
+| Page loading | Wait for `load` (5-10s) | Wait for `domcontentloaded` (2-5s) | **40-50% faster** |
+| Operation timeout | Fixed 30s | Dynamic 3-8s | **60-70% less waiting** |
+| Overall speed | Baseline | 1.5-2x faster | **40-50% speedup** |
+
+### 🎬 Real-World Validation
+
+Tested on real websites with measurable results:
+
+```bash
+# Run performance comparison
+bash scripts/compare.sh
+
+# Test on Wikipedia (10 steps)
+python examples/real_wikipedia_test.py --visible --order native-first
+# Result: 35s → 20s (⚡ 43% faster)
+
+# Test on Hacker News (10 steps)
+python examples/real_hackernews_test.py --visible --order native-first
+# Result: 25s → 15s (⚡ 40% faster)
+```
+
+**Key Optimizations**:
+1. **Smart Waiting**: `domcontentloaded` instead of `load` event (40-50% faster)
+2. **Dynamic Timeout**: 3-8s adaptive timeout instead of fixed 30s (60-70% reduction)
+3. **Auto Retry**: Built-in retry mechanisms for flaky operations (50-80% more stable)
+4. **Resource Preloading**: Background resource prefetching (10-20% boost)
+
+📖 **[See full comparison guide](docs/comparison-guide.md)** for detailed benchmarks.
+
+---
+
+## ✨ Features
+
+### ✅ Implemented (v0.1.0-alpha)
+
+- **Smart Waiting** - Dynamic timeouts (3-8s instead of fixed 30s)
+  - Page state prediction
+  - Adaptive timeout calculation
+  - Resource preloading
+- **Core Architecture** - 100% Playwright compatible
+  - Transparent wrapper
+  - Plugin system
+  - Multi-source configuration
+- **CLI Tool** - Command-line utilities
+  - Performance benchmarking
+  - Enhanced vs native comparison
+  - Configuration management
+- **Test Coverage** - 56 tests passing, 83% coverage
+
+### 🚧 Coming Soon
+
+- **Node.js / TypeScript** - Full API support for JavaScript ecosystem
+- **Multi-Locator** - Semantic + visual + DOM element location
+- **AI API** - High-level operations (`smart_click`, `smart_fill`)
+- **Concurrent Engine** - Parallel operation execution
+- **Cache System** - Three-level caching for repeated operations
+
+---
+
+## 📦 Installation
+
+> **⚠️ Alpha Stage**: Not yet published to PyPI. See [Distribution Guide](docs/distribution-guide.md) for all installation methods.
+
+**Current install options**:
+
+```bash
+# Option 1: From source (recommended)
+git clone https://github.com/yourusername/playwright-enhance
+cd playwright-enhance
+pip install -e .
+playwright install chromium
+
+# Option 2: From GitHub (one-line)
+pip install git+https://github.com/yourusername/playwright-enhance.git
+playwright install chromium
+```
+
+**For development**:
+
+```bash
+git clone https://github.com/yourusername/playwright-enhance
+cd playwright-enhance
+pip install -e ".[dev]"
+playwright install chromium
+pre-commit install
+```
+
+📖 **[Full installation guide](docs/distribution-guide.md)** - Offline install, Docker, CI/CD, and more
+
+---
+
+## 📚 Documentation
+
+### Getting Started
+- **[Quick Start](docs/quick-start.md)** - Get started in 5 minutes
+- **[CLI Quick Start](CLI_QUICKSTART.md)** - CLI tool quick reference
+
+### CLI Tools
+- **[CLI Guide](docs/cli-guide.md)** - Complete CLI usage guide
+- **[CLI Tools Overview](CLI_TOOLS_OVERVIEW.md)** - All CLI tools at a glance
+- **[CLI Comparison Guide](CLI_COMPARISON_GUIDE.md)** - Performance testing guide
+
+### Advanced
+- **[API Reference](docs/api-reference.md)** - Complete API documentation
+- **[Performance Guide](docs/performance.md)** - Optimization tips
+- **[Real Test Guide](REAL_TEST_GUIDE.md)** - Real-world testing scenarios
+- **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Current progress (22/159 tasks)
+
+## 🔧 Usage Examples
+
+### Example 1: Page Screenshot
+
+```python
+from playwright.async_api import async_playwright
+from playwright_enhance import enhance
+
+async with async_playwright() as p:
+    browser = await p.chromium.launch()
+    enhanced = enhance(browser, {'smart_waiting': {'enabled': True}})
+    
+    page = await enhanced.new_page()
+    await page.goto('https://playwright.dev/')
+    await page.screenshot(path='example.png')
+```
+
+### Example 2: Mobile & Geolocation
+
+```python
+from playwright.async_api import async_playwright, devices
+from playwright_enhance import enhance
+
+async with async_playwright() as p:
+    browser = await p.chromium.launch()
+    enhanced = enhance(browser, {'smart_waiting': {'enabled': True}})
+    
+    # Configure iPhone 13 Pro
+    iphone = devices['iPhone 13 Pro']
+    context = await enhanced.new_context(
+        **iphone,
+        locale='en-US',
+        geolocation={'longitude': 12.492507, 'latitude': 41.889938},
+        permissions=['geolocation']
+    )
+    
+    page = await context.new_page()
+    await page.goto('https://maps.google.com')
+    await page.get_by_text('Your location').click()
+    await page.screenshot(path='colosseum-iphone.png')
+```
+
+### Example 3: Evaluate in Browser Context
+
+```python
+from playwright.async_api import async_playwright
+from playwright_enhance import enhance
+
+async with async_playwright() as p:
+    browser = await p.chromium.launch()
+    enhanced = enhance(browser, {'smart_waiting': {'enabled': True}})
+    
+    page = await enhanced.new_page()
+    await page.goto('https://www.example.com/')
+    
+    dimensions = await page.evaluate('''() => {
+        return {
+            width: document.documentElement.clientWidth,
+            height: document.documentElement.clientHeight,
+            deviceScaleFactor: window.devicePixelRatio
+        }
+    }''')
+    print(dimensions)
+```
+
+### Example 4: Intercept Network Requests
+
+```python
+from playwright.async_api import async_playwright
+from playwright_enhance import enhance
+
+async with async_playwright() as p:
+    browser = await p.chromium.launch()
+    enhanced = enhance(browser, {'smart_waiting': {'enabled': True}})
+    
+    page = await enhanced.new_page()
+    
+    # Log and continue all network requests
+    await page.route('**', lambda route: (
+        print(route.request.url),
+        route.continue_()
+    ))
+    
+    await page.goto('http://todomvc.com')
+```
+
+### Advanced: Custom Configuration
+
+```python
+from playwright_enhance import enhance, Config
+
+# Option 1: Runtime config
+config = {
+    'smart_waiting': {
+        'enabled': True,
+        'initial_timeout': 3000,  # 3s initial
+        'max_timeout': 8000,      # 8s max
+    }
+}
+enhanced = enhance(browser, config)
+
+# Option 2: Environment variables
+# export PLAYWRIGHT_ENHANCE_SMART_WAITING__ENABLED=true
+
+# Option 3: Config file
+config = Config(config_file='config.json')
+enhanced = enhance(browser, config)
+```
+
+## 🧪 Testing
+
+Run the test suite and examples:
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=playwright_enhance --cov-report=html
+
+# Run real-world comparison tests
+bash scripts/compare.sh        # Interactive comparison
+bash scripts/test.sh           # Full test suite
+
+# Quick examples
+python examples/basic_usage.py
+python examples/real_wikipedia_test.py --visible
+```
+
+**Current Status**: ✅ 56 tests passing | 83% coverage
+
+---
+
+## 📚 Resources
+
+- **[Documentation](docs/)** - Full documentation
+- **[Python API Reference](docs/api-reference.md)** - Complete API docs
+- **[CLI Guide](docs/cli-guide.md)** - Command-line tools
+- **[Distribution Guide](docs/distribution-guide.md)** - Installation & packaging ⭐
+- **[Performance Guide](docs/performance.md)** - Optimization tips
+- **[Comparison Guide](docs/comparison-guide.md)** - vs Playwright benchmarks
+- **[Contributing](CONTRIBUTING.md)** - How to contribute
+- **[Project Structure](PROJECT_STRUCTURE.md)** - Project organization
+
+---
+
+## 🎯 Roadmap
+
+### v0.1.0-alpha (Current) ✅
+- [x] Core wrapper architecture
+- [x] Smart waiting capability
+- [x] CLI tool with benchmarking
+- [x] Real-world tests (Wikipedia, GitHub, Hacker News, Bilibili)
+- [x] Performance comparison system
+
+### v0.2.0 (Next)
+- [ ] Node.js / TypeScript support
+- [ ] Multi-locator capability
+- [ ] Concurrent engine
+- [ ] Cache system
+
+### v1.0.0
+- [ ] Full test coverage (>90%)
+- [ ] Complete documentation
+- [ ] Performance monitor
+- [ ] Multi-language support (Python, Node.js, Java, .NET)
+
+**Status**: 🚧 Alpha - Core functionality working, more features coming soon!
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+```bash
+# Clone and install
+git clone https://github.com/yourusername/playwright-enhance
+cd playwright-enhance
+pip install -e ".[dev]"
+
+# Install pre-commit hooks
+pre-commit install
+
+# Run tests
+pytest --cov=playwright_enhance
+
+# Format code
+black playwright_enhance tests
+mypy playwright_enhance
+```
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file.
+
+---
+
+## 🙏 Acknowledgments
+
+Built for [OpenClaw](https://github.com/openclaw) and the AI agent community.
+
+Powered by [Playwright](https://playwright.dev) - the amazing browser automation framework by Microsoft.
+
+---
+
+For questions or feedback, [open an issue](https://github.com/yourusername/playwright-enhance/issues).

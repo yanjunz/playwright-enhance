@@ -49,10 +49,10 @@ dev = [
 playwright-enhance-cli = "playwright_enhance.cli.main:cli"
 
 [project.urls]
-Homepage = "https://github.com/playwright-enhance/playwright-enhance"
-Documentation = "https://playwright-enhance.readthedocs.io"
-Repository = "https://github.com/playwright-enhance/playwright-enhance"
-"Bug Tracker" = "https://github.com/playwright-enhance/playwright-enhance/issues"
+Homepage = "https://github.com/yanjunz/playwright-enhance"
+Documentation = "https://github.com/yanjunz/playwright-enhance/blob/master/docs/"
+Repository = "https://github.com/yanjunz/playwright-enhance"
+"Bug Tracker" = "https://github.com/yanjunz/playwright-enhance/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -9,7 +9,10 @@ playwright_enhance.egg-info/entry_points.txt
 playwright_enhance.egg-info/requires.txt
 playwright_enhance.egg-info/top_level.txt
 playwright_enhance/capabilities/__init__.py
+playwright_enhance/capabilities/smart_waiting.py
 playwright_enhance/cli/__init__.py
+playwright_enhance/cli/__main__.py
+playwright_enhance/cli/main.py
 playwright_enhance/core/__init__.py
 playwright_enhance/core/config.py
 playwright_enhance/core/wrapper.py

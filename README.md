@@ -15,10 +15,12 @@
 
 ---
 
+[![PyPI](https://img.shields.io/pypi/v/playwright-enhance?label=PyPI&color=blue)](https://pypi.org/project/playwright-enhance/)
 [![Tests](https://img.shields.io/badge/tests-56%20passing-success)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-83%25-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Downloads](https://img.shields.io/pypi/dm/playwright-enhance?label=downloads)](https://pypistats.org/packages/playwright-enhance)
 
 ## 🎯 Why Playwright-Enhance?
 
@@ -52,22 +54,18 @@ Playwright-Enhance is available for **Python** (more languages coming soon).
 
 ### Installation
 
-> **⚠️ Note**: Currently in **Alpha** stage. Not yet published to PyPI.
-
 ```bash
-# Install from source (recommended for now)
-git clone https://github.com/yourusername/playwright-enhance
-cd playwright-enhance
-pip install -e .
+# Install from GitHub (Alpha version)
+pip install git+https://github.com/yanjunz/playwright-enhance.git
 
-# Or install from GitHub directly
-pip install git+https://github.com/yourusername/playwright-enhance.git
-
-# Install browser
+# Install browser binaries
 playwright install chromium
 ```
 
-📖 **[Full installation guide](docs/distribution-guide.md)** - All installation methods
+> **🚀 PyPI Release Coming Soon**: We're preparing to publish to PyPI. Soon you'll be able to install with just `pip install playwright-enhance`!
+> 
+> 📖 **[Publishing Guide](docs/publishing-guide.md)** - How we'll make it pip-installable  
+> 📖 **[Full Installation Options](docs/distribution-guide.md)** - All current installation methods
 
 ### Python API
 
