@@ -30,20 +30,20 @@ async with async_playwright() as p:
 ### CLI Tool
 
 ```bash
+# 与 Playwright CLI 兼容 + 增强模式
+playwright-enhance-cli screenshot https://example.com output.png --enhanced
+playwright-enhance-cli pdf https://example.com output.pdf --enhanced
+playwright-enhance-cli open https://example.com --enhanced
+
 # 性能基准测试
-playwright-enhance-cli benchmark https://example.com
+playwright-enhance-cli bench run https://example.com --runs 5
 
-# 对比增强版 vs 原生版
-playwright-enhance-cli compare https://example.com --runs 5
-
-# 生成配置文件
+# 配置管理
 playwright-enhance-cli config init config.json --minimal
-
-# 查看系统信息
 playwright-enhance-cli info
 ```
 
-📖 **CLI 完整指南**: [docs/cli-guide.md](docs/cli-guide.md)
+📖 **CLI 命令参考**: [CLI_COMMANDS_REFERENCE.md](CLI_COMMANDS_REFERENCE.md)
 
 ## 🎯 Why Playwright-Enhance?
 

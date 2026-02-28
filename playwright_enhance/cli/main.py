@@ -1,7 +1,7 @@
 """
 Command-line interface for playwright-enhance.
 
-Provides utilities for testing, benchmarking, configuration management, and more.
+Compatible with Playwright CLI commands, with added --enhanced option.
 """
 
 import asyncio
@@ -19,144 +19,332 @@ from playwright_enhance.capabilities.smart_waiting import SmartWaitingPlugin
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name='playwright-enhance')
+@click.version_option(version=__version__, prog_name='playwright-enhance-cli')
 def cli():
     """
-    Playwright-Enhance CLI - Performance-optimized browser automation.
+    Playwright-Enhance CLI - Compatible with Playwright CLI.
     
-    Provides tools for testing, benchmarking, and configuration management.
+    All standard Playwright commands with optional --enhanced flag.
     """
     pass
 
 
 @cli.command()
-@click.argument('url')
-@click.option('--headless/--no-headless', default=True, help='Run in headless mode')
-@click.option('--enhanced/--native', default=True, help='Use enhanced or native Playwright')
+@click.argument('url', required=False)
+@click.option('-b', '--browser', type=click.Choice(['chromium', 'firefox', 'webkit']), 
+              default='chromium', help='Browser to use')
+@click.option('--headless/--headed', default=False, help='Run in headless mode')
+@click.option('--enhanced/--native', default=False, help='Use enhanced Playwright (smart waiting)')
 @click.option('--config', '-c', type=click.Path(exists=True), help='Configuration file path')
-@click.option('--output', '-o', type=click.Path(), help='Save results to file')
-@click.option('--format', type=click.Choice(['json', 'text']), default='text', help='Output format')
-def benchmark(url: str, headless: bool, enhanced: bool, config: Optional[str], 
-              output: Optional[str], format: str):
+def open(url: Optional[str], browser: str, headless: bool, enhanced: bool, config: Optional[str]):
     """
-    Benchmark page loading performance.
+    Open page in browser (compatible with playwright open).
     
-    Compare enhanced vs native Playwright performance on a given URL.
-    
-    Example:
-        playwright-enhance-cli benchmark https://example.com
-        playwright-enhance-cli benchmark https://github.com --no-headless
+    Examples:
+        playwright-enhance-cli open https://example.com
+        playwright-enhance-cli open https://github.com --enhanced
+        playwright-enhance-cli open --browser firefox --enhanced
     """
-    async def run_benchmark():
-        results = {
-            'url': url,
-            'enhanced': enhanced,
-            'headless': headless,
-        }
-        
+    async def run_open():
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=headless)
+            browser_type = getattr(p, browser)
+            browser_obj = await browser_type.launch(headless=headless)
             
-            # Load config if provided
             cfg = Config(config_file=config) if config else Config()
             
             if enhanced:
-                # Enable smart waiting
                 cfg.set('smart_waiting.enabled', True)
-                browser = enhance(browser, cfg.to_dict())
-                
-                page = await browser.new_page()
-                
-                # Register and enable smart waiting plugin
+                browser_obj = enhance(browser_obj, cfg.to_dict())
+            
+            page = await browser_obj.new_page()
+            
+            if enhanced:
                 plugin = SmartWaitingPlugin(cfg.get('smart_waiting'))
                 page.register_plugin('smart_waiting', plugin)
                 page.enable_plugin('smart_waiting')
+            
+            if url:
+                await page.goto(url)
+                click.echo(f"Opened: {url}")
             else:
-                page = await browser.new_page()
+                await page.goto('about:blank')
+                click.echo("Browser opened. Close the browser window to exit.")
             
-            # Measure page load time
-            start_time = time.time()
-            await page.goto(url)
-            await page.wait_for_load_state('domcontentloaded' if enhanced else 'load')
-            load_time = time.time() - start_time
+            # Keep browser open
+            click.echo("Press Ctrl+C to close...")
+            try:
+                while True:
+                    await asyncio.sleep(1)
+            except KeyboardInterrupt:
+                pass
             
-            results['load_time'] = round(load_time, 3)
-            results['load_time_ms'] = round(load_time * 1000)
-            
-            # Get page title
-            results['title'] = await page.title()
-            
-            await browser.close()
-        
-        return results
+            await browser_obj.close()
     
-    # Run benchmark
-    results = asyncio.run(run_benchmark())
+    asyncio.run(run_open())
+
+
+@cli.command()
+@click.argument('url', required=False)
+@click.option('-b', '--browser', type=click.Choice(['chromium', 'firefox', 'webkit']), 
+              default='chromium', help='Browser to use')
+@click.option('--headless/--headed', default=False, help='Run in headless mode')
+@click.option('--enhanced/--native', default=False, help='Use enhanced Playwright')
+@click.option('--target', type=click.Choice(['python', 'javascript', 'java', 'csharp']), 
+              default='python', help='Target language')
+@click.option('-o', '--output', type=click.Path(), help='Save generated code to file')
+def codegen(url: Optional[str], browser: str, headless: bool, enhanced: bool, 
+            target: str, output: Optional[str]):
+    """
+    Open page and generate code for user actions.
     
-    # Format output
-    if format == 'json':
-        output_text = json.dumps(results, indent=2)
-    else:
-        mode = "Enhanced" if enhanced else "Native"
-        output_text = f"""
-Benchmark Results
-{'=' * 50}
-URL:        {results['url']}
-Mode:       {mode}
-Headless:   {headless}
-Title:      {results['title']}
-Load Time:  {results['load_time']}s ({results['load_time_ms']}ms)
-"""
+    Examples:
+        playwright-enhance-cli codegen https://example.com
+        playwright-enhance-cli codegen --enhanced --target python
+    """
+    click.echo("⚠️  Code generation requires the full Playwright installation.")
+    click.echo("Please use: playwright codegen")
+    click.echo("")
+    click.echo("Playwright-Enhance focuses on runtime performance optimization,")
+    click.echo("not code generation. Generated code can be used with playwright-enhance")
+    click.echo("by adding the enhance() wrapper.")
+    sys.exit(1)
+
+
+@cli.command()
+@click.argument('browser', nargs=-1)
+@click.option('--with-deps', is_flag=True, help='Install system dependencies')
+@click.option('--force', is_flag=True, help='Force reinstall')
+def install(browser, with_deps: bool, force: bool):
+    """
+    Install browsers for Playwright.
     
-    # Output
-    if output:
-        Path(output).write_text(output_text)
-        click.echo(f"Results saved to: {output}")
-    else:
-        click.echo(output_text)
+    Examples:
+        playwright-enhance-cli install
+        playwright-enhance-cli install chromium
+        playwright-enhance-cli install --with-deps
+    """
+    import subprocess
+    
+    cmd = ['playwright', 'install']
+    if with_deps:
+        cmd.append('--with-deps')
+    if force:
+        cmd.append('--force')
+    if browser:
+        cmd.extend(browser)
+    
+    click.echo(f"Running: {' '.join(cmd)}")
+    result = subprocess.run(cmd)
+    sys.exit(result.returncode)
+
+
+@cli.command('install-deps')
+@click.argument('browser', nargs=-1)
+def install_deps(browser):
+    """
+    Install dependencies necessary to run browsers.
+    
+    Examples:
+        playwright-enhance-cli install-deps
+        playwright-enhance-cli install-deps chromium
+    """
+    import subprocess
+    
+    cmd = ['playwright', 'install-deps']
+    if browser:
+        cmd.extend(browser)
+    
+    click.echo(f"Running: {' '.join(cmd)}")
+    result = subprocess.run(cmd)
+    sys.exit(result.returncode)
 
 
 @cli.command()
 @click.argument('url')
-@click.option('--headless/--no-headless', default=True, help='Run in headless mode')
-@click.option('--runs', '-n', default=3, help='Number of runs for each mode')
+@click.argument('filename')
+@click.option('-b', '--browser', type=click.Choice(['chromium', 'firefox', 'webkit']), 
+              default='chromium', help='Browser to use')
+@click.option('--enhanced/--native', default=False, help='Use enhanced Playwright')
+@click.option('--full-page', is_flag=True, help='Capture full page screenshot')
 @click.option('--config', '-c', type=click.Path(exists=True), help='Configuration file path')
-@click.option('--output', '-o', type=click.Path(), help='Save results to file')
-def compare(url: str, headless: bool, runs: int, config: Optional[str], output: Optional[str]):
+def screenshot(url: str, filename: str, browser: str, enhanced: bool, 
+               full_page: bool, config: Optional[str]):
     """
-    Compare enhanced vs native performance.
+    Capture a page screenshot.
     
-    Run multiple tests to compare enhanced and native Playwright performance.
-    
-    Example:
-        playwright-enhance-cli compare https://example.com --runs 5
+    Examples:
+        playwright-enhance-cli screenshot https://example.com output.png
+        playwright-enhance-cli screenshot https://github.com page.png --enhanced --full-page
     """
-    async def run_single_test(enhanced: bool):
+    async def run_screenshot():
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=headless)
+            browser_type = getattr(p, browser)
+            browser_obj = await browser_type.launch(headless=True)
             
             cfg = Config(config_file=config) if config else Config()
             
             if enhanced:
                 cfg.set('smart_waiting.enabled', True)
-                browser = enhance(browser, cfg.to_dict())
-                page = await browser.new_page()
+                browser_obj = enhance(browser_obj, cfg.to_dict())
+            
+            page = await browser_obj.new_page()
+            
+            if enhanced:
+                plugin = SmartWaitingPlugin(cfg.get('smart_waiting'))
+                page.register_plugin('smart_waiting', plugin)
+                page.enable_plugin('smart_waiting')
+            
+            start_time = time.time()
+            await page.goto(url)
+            load_time = time.time() - start_time
+            
+            await page.screenshot(path=filename, full_page=full_page)
+            
+            await browser_obj.close()
+            
+            mode = "enhanced" if enhanced else "native"
+            click.echo(f"Screenshot saved to: {filename}")
+            click.echo(f"Load time ({mode}): {load_time:.3f}s")
+    
+    asyncio.run(run_screenshot())
+
+
+@cli.command()
+@click.argument('url')
+@click.argument('filename')
+@click.option('-b', '--browser', type=click.Choice(['chromium', 'firefox', 'webkit']), 
+              default='chromium', help='Browser to use')
+@click.option('--enhanced/--native', default=False, help='Use enhanced Playwright')
+@click.option('--config', '-c', type=click.Path(exists=True), help='Configuration file path')
+def pdf(url: str, filename: str, browser: str, enhanced: bool, config: Optional[str]):
+    """
+    Save page as PDF.
+    
+    Examples:
+        playwright-enhance-cli pdf https://example.com output.pdf
+        playwright-enhance-cli pdf https://github.com page.pdf --enhanced
+    """
+    if browser != 'chromium':
+        click.echo("⚠️  PDF generation is only supported in Chromium.")
+        sys.exit(1)
+    
+    async def run_pdf():
+        async with async_playwright() as p:
+            browser_obj = await p.chromium.launch(headless=True)
+            
+            cfg = Config(config_file=config) if config else Config()
+            
+            if enhanced:
+                cfg.set('smart_waiting.enabled', True)
+                browser_obj = enhance(browser_obj, cfg.to_dict())
+            
+            page = await browser_obj.new_page()
+            
+            if enhanced:
+                plugin = SmartWaitingPlugin(cfg.get('smart_waiting'))
+                page.register_plugin('smart_waiting', plugin)
+                page.enable_plugin('smart_waiting')
+            
+            start_time = time.time()
+            await page.goto(url)
+            load_time = time.time() - start_time
+            
+            await page.pdf(path=filename)
+            
+            await browser_obj.close()
+            
+            mode = "enhanced" if enhanced else "native"
+            click.echo(f"PDF saved to: {filename}")
+            click.echo(f"Load time ({mode}): {load_time:.3f}s")
+    
+    asyncio.run(run_pdf())
+
+
+# Browser shortcuts (compatible with playwright CLI)
+@cli.command()
+@click.argument('url', required=False)
+@click.option('--headless/--headed', default=False, help='Run in headless mode')
+@click.option('--enhanced/--native', default=False, help='Use enhanced Playwright')
+def cr(url: Optional[str], headless: bool, enhanced: bool):
+    """Open page in Chromium (shortcut for open --browser chromium)."""
+    ctx = click.Context(open)
+    ctx.invoke(open, url=url, browser='chromium', headless=headless, enhanced=enhanced, config=None)
+
+
+@cli.command()
+@click.argument('url', required=False)
+@click.option('--headless/--headed', default=False, help='Run in headless mode')
+@click.option('--enhanced/--native', default=False, help='Use enhanced Playwright')
+def ff(url: Optional[str], headless: bool, enhanced: bool):
+    """Open page in Firefox (shortcut for open --browser firefox)."""
+    ctx = click.Context(open)
+    ctx.invoke(open, url=url, browser='firefox', headless=headless, enhanced=enhanced, config=None)
+
+
+@cli.command()
+@click.argument('url', required=False)
+@click.option('--headless/--headed', default=False, help='Run in headless mode')
+@click.option('--enhanced/--native', default=False, help='Use enhanced Playwright')
+def wk(url: Optional[str], headless: bool, enhanced: bool):
+    """Open page in WebKit (shortcut for open --browser webkit)."""
+    ctx = click.Context(open)
+    ctx.invoke(open, url=url, browser='webkit', headless=headless, enhanced=enhanced, config=None)
+
+
+# Enhanced-specific commands (additional features)
+@cli.group()
+def bench():
+    """Benchmarking and performance testing commands."""
+    pass
+
+
+@bench.command('run')
+@click.argument('url')
+@click.option('--headless/--headed', default=True, help='Run in headless mode')
+@click.option('--runs', '-n', default=3, help='Number of runs')
+@click.option('--browser', '-b', type=click.Choice(['chromium', 'firefox', 'webkit']), 
+              default='chromium', help='Browser to use')
+@click.option('--config', '-c', type=click.Path(exists=True), help='Configuration file path')
+@click.option('--output', '-o', type=click.Path(), help='Save results to file')
+def bench_run(url: str, headless: bool, runs: int, browser: str, 
+              config: Optional[str], output: Optional[str]):
+    """
+    Run performance benchmark comparing enhanced vs native.
+    
+    Examples:
+        playwright-enhance-cli bench run https://example.com
+        playwright-enhance-cli bench run https://github.com --runs 5 -o results.json
+    """
+    async def run_single_test(enhanced: bool):
+        async with async_playwright() as p:
+            browser_type = getattr(p, browser)
+            browser_obj = await browser_type.launch(headless=headless)
+            
+            cfg = Config(config_file=config) if config else Config()
+            
+            if enhanced:
+                cfg.set('smart_waiting.enabled', True)
+                browser_obj = enhance(browser_obj, cfg.to_dict())
+                page = await browser_obj.new_page()
                 plugin = SmartWaitingPlugin(cfg.get('smart_waiting'))
                 page.register_plugin('smart_waiting', plugin)
                 page.enable_plugin('smart_waiting')
             else:
-                page = await browser.new_page()
+                page = await browser_obj.new_page()
             
             start_time = time.time()
             await page.goto(url)
             await page.wait_for_load_state('domcontentloaded' if enhanced else 'load')
             load_time = time.time() - start_time
             
-            await browser.close()
+            await browser_obj.close()
             return load_time
     
     # Run tests
-    click.echo(f"Running comparison tests ({runs} runs each)...")
+    click.echo(f"Running benchmark ({runs} runs each)...")
+    click.echo(f"URL: {url}")
+    click.echo(f"Browser: {browser}")
+    click.echo("")
     
     native_times = []
     enhanced_times = []
@@ -179,6 +367,7 @@ def compare(url: str, headless: bool, runs: int, config: Optional[str], output: 
     
     results = {
         'url': url,
+        'browser': browser,
         'runs': runs,
         'native': {
             'times': [round(t, 3) for t in native_times],
@@ -197,130 +386,87 @@ def compare(url: str, headless: bool, runs: int, config: Optional[str], output: 
     }
     
     # Format output
-    output_text = f"""
-Performance Comparison
-{'=' * 60}
-URL:        {url}
-Runs:       {runs}
-
-Native Playwright:
-  Average:  {results['native']['average']}s
-  Min:      {results['native']['min']}s
-  Max:      {results['native']['max']}s
-
-Enhanced Playwright:
-  Average:  {results['enhanced']['average']}s
-  Min:      {results['enhanced']['min']}s
-  Max:      {results['enhanced']['max']}s
-
-Improvement: {results['improvement_percent']}% faster ({results['speedup']}x speedup)
-"""
-    
-    if output:
-        with open(output, 'w') as f:
-            json.dump(results, f, indent=2)
-        click.echo(output_text)
-        click.echo(f"\nDetailed results saved to: {output}")
+    click.echo("")
+    click.echo("=" * 60)
+    click.echo("Performance Benchmark Results")
+    click.echo("=" * 60)
+    click.echo(f"URL:        {results['url']}")
+    click.echo(f"Browser:    {results['browser']}")
+    click.echo(f"Runs:       {results['runs']}")
+    click.echo("")
+    click.echo("Native Playwright:")
+    click.echo(f"  Average:  {results['native']['average']}s")
+    click.echo(f"  Min:      {results['native']['min']}s")
+    click.echo(f"  Max:      {results['native']['max']}s")
+    click.echo("")
+    click.echo("Enhanced Playwright:")
+    click.echo(f"  Average:  {results['enhanced']['average']}s")
+    click.echo(f"  Min:      {results['enhanced']['min']}s")
+    click.echo(f"  Max:      {results['enhanced']['max']}s")
+    click.echo("")
+    if improvement > 0:
+        click.echo(f"⚡ Improvement: {results['improvement_percent']}% faster ({results['speedup']}x speedup)")
     else:
-        click.echo(output_text)
+        click.echo(f"Improvement: {results['improvement_percent']}% faster ({results['speedup']}x speedup)")
+    click.echo("")
+    
+    # Output
+    if output:
+        Path(output).write_text(json.dumps(results, indent=2))
+        click.echo(f"Results saved to: {output}")
 
 
 @cli.group()
-def config_cmd():
+def config():
     """Configuration management commands."""
     pass
 
 
-@config_cmd.command('show')
-@click.option('--file', '-f', type=click.Path(exists=True), help='Config file to show')
-def config_show(file: Optional[str]):
-    """
-    Show current configuration.
-    
-    Example:
-        playwright-enhance-cli config show
-        playwright-enhance-cli config show --file config.json
-    """
-    cfg = Config(config_file=file) if file else Config()
+@config.command('show')
+def config_show():
+    """Show current configuration."""
+    cfg = Config()
     click.echo(json.dumps(cfg.to_dict(), indent=2))
 
 
-@config_cmd.command('init')
-@click.argument('output', type=click.Path())
-@click.option('--minimal', is_flag=True, help='Generate minimal config')
-def config_init(output: str, minimal: bool):
+@config.command('init')
+@click.argument('filepath')
+@click.option('--minimal', is_flag=True, help='Create minimal config')
+def config_init(filepath: str, minimal: bool):
     """
-    Initialize a new configuration file.
+    Initialize configuration file.
     
-    Example:
+    Examples:
         playwright-enhance-cli config init config.json
         playwright-enhance-cli config init config.json --minimal
     """
+    cfg = Config()
+    config_data = cfg.to_dict()
+    
     if minimal:
-        config = {
+        config_data = {
             'smart_waiting': {
                 'enabled': True,
-                'initial_timeout': 5000,
-                'max_timeout': 10000,
+                'initial_timeout': 3000,
+                'max_timeout': 8000
             }
         }
-    else:
-        cfg = Config()
-        config = cfg.to_dict()
     
-    output_path = Path(output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    with open(output_path, 'w') as f:
-        json.dump(config, f, indent=2)
-    
-    click.echo(f"Configuration file created: {output}")
+    Path(filepath).write_text(json.dumps(config_data, indent=2))
+    click.echo(f"Configuration initialized: {filepath}")
 
 
-@config_cmd.command('validate')
-@click.argument('file', type=click.Path(exists=True))
-def config_validate(file: str):
-    """
-    Validate a configuration file.
-    
-    Example:
-        playwright-enhance-cli config validate config.json
-    """
+@config.command('validate')
+@click.argument('filepath')
+def config_validate(filepath: str):
+    """Validate configuration file."""
     try:
-        cfg = Config(config_file=file)
-        click.echo(f"✓ Configuration file is valid: {file}")
-        click.echo(f"\nLoaded configuration:")
+        cfg = Config(config_file=filepath)
+        click.echo(f"✅ Configuration valid: {filepath}")
         click.echo(json.dumps(cfg.to_dict(), indent=2))
     except Exception as e:
-        click.echo(f"✗ Configuration file is invalid: {file}", err=True)
-        click.echo(f"Error: {e}", err=True)
+        click.echo(f"❌ Invalid configuration: {e}")
         sys.exit(1)
-
-
-@cli.command()
-@click.argument('script', type=click.Path(exists=True))
-@click.option('--headless/--no-headless', default=True, help='Run in headless mode')
-@click.option('--enhanced/--native', default=True, help='Use enhanced or native Playwright')
-@click.option('--config', '-c', type=click.Path(exists=True), help='Configuration file path')
-def run(script: str, headless: bool, enhanced: bool, config: Optional[str]):
-    """
-    Run a Playwright test script.
-    
-    Example:
-        playwright-enhance-cli run test.py
-        playwright-enhance-cli run test.py --no-headless --native
-    """
-    # Set environment variables
-    import os
-    os.environ['PLAYWRIGHT_ENHANCE_ENABLED'] = str(enhanced)
-    os.environ['PLAYWRIGHT_HEADLESS'] = str(headless)
-    if config:
-        os.environ['PLAYWRIGHT_ENHANCE_CONFIG'] = config
-    
-    # Run the script
-    import subprocess
-    result = subprocess.run([sys.executable, script], check=False)
-    sys.exit(result.returncode)
 
 
 @cli.command()
@@ -359,24 +505,6 @@ Features:
 Documentation:  https://github.com/playwright-enhance/playwright-enhance
 """
     click.echo(info_text)
-
-
-@cli.command()
-@click.option('--port', '-p', default=8080, help='Server port')
-@click.option('--host', '-h', default='127.0.0.1', help='Server host')
-def demo(port: int, host: str):
-    """
-    Start an interactive demo server.
-    
-    Example:
-        playwright-enhance-cli demo
-        playwright-enhance-cli demo --port 3000
-    """
-    click.echo(f"Starting demo server on http://{host}:{port}")
-    click.echo("Press Ctrl+C to stop")
-    click.echo("\nFeature: Interactive demo server coming soon!")
-    click.echo("For now, try running example scripts:")
-    click.echo("  python examples/real_wikipedia_test.py --visible")
 
 
 if __name__ == '__main__':
