@@ -344,34 +344,50 @@ class SmartWaitingPlugin:
         """Pre-hook for page.goto() - use smart waiting."""
         strategy = self._get_or_create_strategy(enhanced_page)
         
+        # Override timeout if not provided - use smart timeout instead of default 30s
+        if 'timeout' not in kwargs:
+            await strategy._monitor.update_metrics()
+            smart_timeout = strategy._calculator.calculate_timeout(strategy._monitor.metrics)
+            kwargs['timeout'] = smart_timeout
+        
+        # Use domcontentloaded instead of load for faster response
+        if 'wait_until' not in kwargs:
+            kwargs['wait_until'] = 'domcontentloaded'
+        
         # Start navigation
         response = await enhanced_page._page.goto(url, **kwargs)
         
-        # Wait for page load with adaptive strategy
-        await strategy.wait_for_page_load()
+        # Don't wait for networkidle unless explicitly requested
+        # This is the key optimization: we proceed as soon as DOM is interactive
         
         return response
     
     async def before_click(self, enhanced_page: Any, selector: str, **kwargs) -> None:
-        """Pre-hook for page.click() - preload if it's a link."""
-        preloader = self._get_or_create_preloader(enhanced_page)
+        """Pre-hook for page.click() - optimize waiting strategy."""
+        # Reduce default timeout for clicks (5s instead of 30s)
+        if 'timeout' not in kwargs:
+            kwargs['timeout'] = 5000
         
-        # Try to preload link target
+        # Preload link target if available
+        preloader = self._get_or_create_preloader(enhanced_page)
         await preloader.preload_link_target(selector)
         
         # Return None to let original method execute
         return None
     
     async def before_fill(self, enhanced_page: Any, selector: str, value: str, **kwargs) -> None:
-        """Pre-hook for page.fill() - preload form resources."""
-        preloader = self._get_or_create_preloader(enhanced_page)
+        """Pre-hook for page.fill() - optimize timeout."""
+        # Reduce default timeout for fill operations
+        if 'timeout' not in kwargs:
+            kwargs['timeout'] = 5000
         
-        # Try to find parent form and preload
+        # Preload form resources in background
+        preloader = self._get_or_create_preloader(enhanced_page)
         try:
             form_selector = await enhanced_page._page.evaluate(f"""(selector) => {{
                 const element = document.querySelector(selector);
                 const form = element ? element.closest('form') : null;
-                return form ? `form:has(${selector})` : null;
+                return form ? `form:has(${{selector}})` : null;
             }}""", selector)
             
             if form_selector:
@@ -380,4 +396,17 @@ class SmartWaitingPlugin:
             pass
         
         # Return None to let original method execute
+        return None
+    
+    async def before_wait_for_selector(self, enhanced_page: Any, selector: str, **kwargs) -> None:
+        """Pre-hook for wait_for_selector - use smart timeout."""
+        strategy = self._get_or_create_strategy(enhanced_page)
+        
+        # Use adaptive timeout instead of default 30s
+        if 'timeout' not in kwargs:
+            await strategy._monitor.update_metrics()
+            smart_timeout = strategy._calculator.calculate_timeout(strategy._monitor.metrics)
+            # Cap at 10s for selector waiting (usually much faster)
+            kwargs['timeout'] = min(smart_timeout, 10000)
+        
         return None
