@@ -234,6 +234,8 @@ async def main():
     parser = argparse.ArgumentParser(description='GitHub 真实测试对比')
     parser.add_argument('--headless', action='store_true', help='无头模式运行')
     parser.add_argument('--visible', action='store_true', help='可见模式运行（默认）')
+    parser.add_argument('--order', choices=['native-first', 'enhanced-first'], default='native-first', help='运行顺序')
+    parser.add_argument('--only', choices=['native', 'enhanced'], help='只运行指定版本')
     args = parser.parse_args()
     
     headless = args.headless or not args.visible
@@ -246,49 +248,64 @@ async def main():
     print("步骤: 10 个操作")
     print("=" * 60)
     
-    # 运行原生版本
-    native_time, native_steps = await native_github_test(headless)
+    native_time = None
+    native_steps = []
+    enhanced_time = None
+    enhanced_steps = []
     
-    # 等待一下
-    await asyncio.sleep(2)
-    
-    # 运行增强版本
-    enhanced_time, enhanced_steps = await enhanced_github_test(headless)
-    
-    # 对比结果
-    print("\n" + "=" * 60)
-    print("📊 测试结果对比")
-    print("=" * 60)
-    
-    print(f"\n原生版本:     {native_time:.2f}s")
-    print(f"增强版本:     {enhanced_time:.2f}s")
-    
-    if enhanced_time < native_time:
-        improvement = (native_time - enhanced_time) / native_time * 100
-        saved = native_time - enhanced_time
-        speedup = native_time / enhanced_time
-        
-        print(f"\n⚡ 性能提升:   {improvement:.1f}%")
-        print(f"⏱️  节省时间:   {saved:.2f}s")
-        print(f"🚀 速度倍数:   {speedup:.2f}x")
-        
-        print("\n🔑 关键优化技术：")
-        print("  1. 智能超时：3-8s自适应 vs 30s固定")
-        print("  2. 快速加载：domcontentloaded vs load+networkidle")
-        print("  3. 提前响应：元素可用即继续")
-        print("  4. 减少等待：GitHub 大量 AJAX 场景最明显")
-        
-        print("\n📈 各步骤对比：")
-        for i, (native_step, enhanced_step) in enumerate(zip(native_steps, enhanced_steps), 1):
-            native_desc, native_t = native_step
-            enhanced_desc, enhanced_t = enhanced_step
-            if native_t > 0:
-                step_improvement = (native_t - enhanced_t) / native_t * 100
-                print(f"  {i:2d}. {native_desc:12s} {native_t:5.2f}s → {enhanced_t:5.2f}s  ({step_improvement:+.0f}%)")
+    # 根据参数决定运行顺序
+    if args.only == 'native':
+        native_time, native_steps = await native_github_test(headless)
+    elif args.only == 'enhanced':
+        enhanced_time, enhanced_steps = await enhanced_github_test(headless)
+    elif args.order == 'enhanced-first':
+        enhanced_time, enhanced_steps = await enhanced_github_test(headless)
+        await asyncio.sleep(2)
+        native_time, native_steps = await native_github_test(headless)
     else:
-        print("\n⚠️  增强版本在此次测试中未体现优势")
+        native_time, native_steps = await native_github_test(headless)
+        await asyncio.sleep(2)
+        enhanced_time, enhanced_steps = await enhanced_github_test(headless)
     
-    print("\n" + "=" * 60)
+    # 对比结果（只在两个版本都运行时显示）
+    if native_time is not None and enhanced_time is not None:
+        print("\n" + "=" * 60)
+        print("📊 测试结果对比")
+        print("=" * 60)
+        
+        print(f"\n原生版本:     {native_time:.2f}s")
+        print(f"增强版本:     {enhanced_time:.2f}s")
+        
+        if enhanced_time < native_time:
+            improvement = (native_time - enhanced_time) / native_time * 100
+            saved = native_time - enhanced_time
+            speedup = native_time / enhanced_time
+            
+            print(f"\n⚡ 性能提升:   {improvement:.1f}%")
+            print(f"⏱️  节省时间:   {saved:.2f}s")
+            print(f"🚀 速度倍数:   {speedup:.2f}x")
+            
+            print("\n🔑 关键优化技术：")
+            print("  1. 智能超时：3-8s自适应 vs 30s固定")
+            print("  2. 快速加载：domcontentloaded vs load+networkidle")
+            print("  3. 提前响应：元素可用即继续")
+            print("  4. 减少等待：GitHub 大量 AJAX 场景最明显")
+            
+            print("\n📈 各步骤对比：")
+            for i, (native_step, enhanced_step) in enumerate(zip(native_steps, enhanced_steps), 1):
+                native_desc, native_t = native_step
+                enhanced_desc, enhanced_t = enhanced_step
+                if native_t > 0:
+                    step_improvement = (native_t - enhanced_t) / native_t * 100
+                    print(f"  {i:2d}. {native_desc:12s} {native_t:5.2f}s → {enhanced_t:5.2f}s  ({step_improvement:+.0f}%)")
+        else:
+            print("\n⚠️  增强版本在此次测试中未体现优势")
+        
+        print("\n" + "=" * 60)
+    elif args.only:
+        print("\n" + "=" * 60)
+        print(f"✅ {'原生' if args.only == 'native' else '增强'}版本测试完成")
+        print("=" * 60)
 
 
 if __name__ == '__main__':
