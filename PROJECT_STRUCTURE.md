@@ -63,9 +63,9 @@ playwright-enhance/
 ### 当前统计
 
 - **根目录配置文件**: 5 个 (README, CONTRIBUTING, pyproject, pytest, setup)
-- **文档**: 6 个 (docs/)
+- **文档**: 7 个 (docs/)
 - **示例**: 4 个 (examples/)
-- **脚本**: 7 个 (scripts/)
+- **脚本**: 8 个 (scripts/)
 - **核心代码**: 4 个模块 (playwright_enhance/)
 - **测试代码**: 3 个类型 (tests/)
 
@@ -79,6 +79,7 @@ playwright-enhance/
 |------|------|------|
 | `quick-start.md` | 快速开始指南 | 新手 |
 | `cli-guide.md` | CLI 完整指南 | CLI 用户 |
+| `comparison-guide.md` | 性能对比指南 ⭐ | 所有用户 |
 | `api-reference.md` | API 参考文档 | 开发者 |
 | `performance.md` | 性能优化指南 | 高级用户 |
 | `testing.md` | 测试指南 | 开发者 |
@@ -107,6 +108,7 @@ playwright-enhance/
 
 | 脚本 | 用途 | 耗时 |
 |------|------|------|
+| `compare.sh` | Playwright 对比测试 ⭐ | ~60s |
 | `demo.sh` | 运行基础演示 | ~5s |
 | `test.sh` | 运行所有测试 | ~30s |
 | `verify.sh` | 验证环境配置 | ~3s |
@@ -118,6 +120,9 @@ playwright-enhance/
 **使用方法**:
 
 ```bash
+# Playwright 对比（推荐）⭐
+bash scripts/compare.sh
+
 # 快速验证
 bash scripts/verify.sh
 
