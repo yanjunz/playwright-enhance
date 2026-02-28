@@ -24,20 +24,20 @@ if ! command -v python &> /dev/null; then
     exit 1
 fi
 
-# 测试网站列表
+# 测试网站列表 (使用 | 作为分隔符避免与 URL 中的 : 冲突)
 SITES=(
-    "https://example.com:Example Domain"
-    "https://www.wikipedia.org:Wikipedia"
-    "https://news.ycombinator.com:Hacker News"
-    "https://github.com:GitHub"
+    "https://example.com|Example Domain"
+    "https://www.wikipedia.org|Wikipedia"
+    "https://news.ycombinator.com|Hacker News"
+    "https://github.com|GitHub"
 )
 
 # 显示菜单
 echo ""
 echo "请选择测试类型："
 echo ""
-echo "  1. 单网站基准测试 (benchmark)"
-echo "  2. 单网站性能对比 (compare)"
+echo "  1. 单网站截图对比 (screenshot)"
+echo "  2. 单网站性能基准测试 (bench run)"
 echo "  3. 多网站批量测试"
 echo "  4. 自定义 URL 测试"
 echo ""
@@ -57,15 +57,15 @@ if [ "$mode_choice" = "1" ]; then
     MODE="--headless"
     MODE_TEXT="无头模式"
 else
-    MODE="--no-headless"
+    MODE="--headed"
     MODE_TEXT="可见模式"
 fi
 
 echo ""
 echo "======================================================"
 
-# 函数：运行基准测试
-run_benchmark() {
+# 函数：运行截图对比
+run_screenshot_compare() {
     local url=$1
     local name=$2
     
@@ -74,30 +74,37 @@ run_benchmark() {
     echo -e "${BLUE}📍 URL: ${url}${NC}"
     echo "------------------------------------------------------"
     
-    echo ""
-    echo -e "${YELLOW}[1/2] 原生 Playwright 测试...${NC}"
-    python -m playwright_enhance.cli.main benchmark "$url" $MODE --native
+    # 生成安全的文件名
+    safe_name=$(echo "$name" | tr ' ' '_' | tr '[:upper:]' '[:lower:]')
     
     echo ""
-    echo -e "${YELLOW}[2/2] Playwright-Enhance 测试...${NC}"
-    python -m playwright_enhance.cli.main benchmark "$url" $MODE --enhanced
+    echo -e "${YELLOW}[1/2] 原生 Playwright 截图...${NC}"
+    python -m playwright_enhance.cli screenshot "$url" "/tmp/${safe_name}_native.png"
     
+    echo ""
+    echo -e "${YELLOW}[2/2] Playwright-Enhance 截图...${NC}"
+    python -m playwright_enhance.cli screenshot "$url" "/tmp/${safe_name}_enhanced.png" --enhanced
+    
+    echo ""
+    echo -e "${GREEN}✅ 截图已保存到:${NC}"
+    echo "   原生版: /tmp/${safe_name}_native.png"
+    echo "   增强版: /tmp/${safe_name}_enhanced.png"
     echo "------------------------------------------------------"
 }
 
-# 函数：运行性能对比
-run_compare() {
+# 函数：运行性能基准测试
+run_benchmark() {
     local url=$1
     local name=$2
     local runs=$3
     
     echo ""
-    echo -e "${BLUE}🧪 对比测试: ${name}${NC}"
+    echo -e "${BLUE}🧪 性能基准测试: ${name}${NC}"
     echo -e "${BLUE}📍 URL: ${url}${NC}"
     echo -e "${BLUE}🔄 运行次数: ${runs}${NC}"
     echo "------------------------------------------------------"
     
-    python -m playwright_enhance.cli.main compare "$url" $MODE --runs $runs
+    python -m playwright_enhance.cli bench run "$url" $MODE --runs "$runs"
     
     echo "------------------------------------------------------"
 }
@@ -105,12 +112,12 @@ run_compare() {
 # 主测试逻辑
 case $test_choice in
     1)
-        # 单网站基准测试
+        # 单网站截图对比
         echo ""
         echo "选择测试网站："
         echo ""
         for i in "${!SITES[@]}"; do
-            IFS=':' read -r url name <<< "${SITES[$i]}"
+            IFS='|' read -r url name <<< "${SITES[$i]}"
             echo "  $((i+1)). $name ($url)"
         done
         echo "  5. 自定义 URL"
@@ -120,11 +127,11 @@ case $test_choice in
         
         if [ "$site_choice" = "5" ]; then
             read -p "请输入 URL: " custom_url
-            run_benchmark "$custom_url" "自定义网站"
+            run_screenshot_compare "$custom_url" "自定义网站"
         elif [ "$site_choice" -ge 1 ] && [ "$site_choice" -le ${#SITES[@]} ]; then
             idx=$((site_choice-1))
-            IFS=':' read -r url name <<< "${SITES[$idx]}"
-            run_benchmark "$url" "$name"
+            IFS='|' read -r url name <<< "${SITES[$idx]}"
+            run_screenshot_compare "$url" "$name"
         else
             echo -e "${RED}❌ 无效选项${NC}"
             exit 1
@@ -132,12 +139,12 @@ case $test_choice in
         ;;
         
     2)
-        # 单网站性能对比
+        # 单网站性能基准测试
         echo ""
         echo "选择测试网站："
         echo ""
         for i in "${!SITES[@]}"; do
-            IFS=':' read -r url name <<< "${SITES[$i]}"
+            IFS='|' read -r url name <<< "${SITES[$i]}"
             echo "  $((i+1)). $name ($url)"
         done
         echo "  5. 自定义 URL"
@@ -148,16 +155,13 @@ case $test_choice in
         read -p "请输入运行次数 (默认 3): " runs
         runs=${runs:-3}
         
-        read -p "请输入运行次数 (默认 3): " runs
-        runs=${runs:-3}
-        
         if [ "$site_choice" = "5" ]; then
             read -p "请输入 URL: " custom_url
-            run_compare "$custom_url" "自定义网站" "$runs"
+            run_benchmark "$custom_url" "自定义网站" "$runs"
         elif [ "$site_choice" -ge 1 ] && [ "$site_choice" -le ${#SITES[@]} ]; then
             idx=$((site_choice-1))
-            IFS=':' read -r url name <<< "${SITES[$idx]}"
-            run_compare "$url" "$name" "$runs"
+            IFS='|' read -r url name <<< "${SITES[$idx]}"
+            run_benchmark "$url" "$name" "$runs"
         else
             echo -e "${RED}❌ 无效选项${NC}"
             exit 1
@@ -180,7 +184,7 @@ case $test_choice in
         mkdir -p "$result_dir"
         
         for i in "${!SITES[@]}"; do
-            IFS=':' read -r url name <<< "${SITES[$i]}"
+            IFS='|' read -r url name <<< "${SITES[$i]}"
             
             echo ""
             echo -e "${BLUE}[$((i+1))/${#SITES[@]}] 测试 ${name}${NC}"
@@ -190,8 +194,8 @@ case $test_choice in
             safe_name=$(echo "$name" | tr ' ' '_' | tr '[:upper:]' '[:lower:]')
             output_file="$result_dir/${safe_name}.json"
             
-            python -m playwright_enhance.cli.main compare "$url" $MODE \
-                --runs $runs \
+            python -m playwright_enhance.cli bench run "$url" $MODE \
+                --runs "$runs" \
                 -o "$output_file"
             
             echo -e "${GREEN}✅ 结果已保存到: $output_file${NC}"
@@ -274,18 +278,18 @@ print()
         
         echo ""
         echo "选择测试类型："
-        echo "  1. 基准测试 (benchmark)"
-        echo "  2. 性能对比 (compare)"
+        echo "  1. 截图对比 (screenshot)"
+        echo "  2. 性能基准测试 (bench run)"
         echo ""
         
         read -p "请输入选项 (1-2): " custom_choice
         
         if [ "$custom_choice" = "1" ]; then
-            run_benchmark "$custom_url" "自定义网站"
+            run_screenshot_compare "$custom_url" "自定义网站"
         else
             read -p "运行次数 (默认 3): " runs
             runs=${runs:-3}
-            run_compare "$custom_url" "自定义网站" $runs
+            run_benchmark "$custom_url" "自定义网站" "$runs"
         fi
         ;;
         
@@ -301,12 +305,12 @@ echo -e "${GREEN}✅ 测试完成！${NC}"
 echo "======================================================"
 echo ""
 echo "💡 提示："
-echo "  - Playwright-Enhance 通过智能等待和快速加载实现性能提升"
+echo "  - Playwright-Enhance 通过智能等待实现性能提升"
 echo "  - 不同网站和网络环境结果会有差异"
 echo "  - 建议运行 3-5 次获得稳定结果"
 echo ""
 echo "📖 更多信息："
-echo "  - CLI 使用指南: docs/cli-guide.md"
+echo "  - CLI 命令参考: CLI_COMMANDS_REFERENCE.md"
+echo "  - Playwright 兼容性: PLAYWRIGHT_COMPATIBILITY.md"
 echo "  - 快速开始: CLI_QUICKSTART.md"
-echo "  - GitHub: https://github.com/playwright-enhance/playwright-enhance"
 echo ""
