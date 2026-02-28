@@ -121,15 +121,13 @@ case $test_choice in
         if [ "$site_choice" = "5" ]; then
             read -p "请输入 URL: " custom_url
             run_benchmark "$custom_url" "自定义网站"
-        else
+        elif [ "$site_choice" -ge 1 ] && [ "$site_choice" -le ${#SITES[@]} ]; then
             idx=$((site_choice-1))
-            if [ $idx -ge 0 ] && [ $idx -lt ${#SITES[@]} ]; then
-                IFS=':' read -r url name <<< "${SITES[$idx]}"
-                run_benchmark "$url" "$name"
-            else
-                echo -e "${RED}❌ 无效选项${NC}"
-                exit 1
-            fi
+            IFS=':' read -r url name <<< "${SITES[$idx]}"
+            run_benchmark "$url" "$name"
+        else
+            echo -e "${RED}❌ 无效选项${NC}"
+            exit 1
         fi
         ;;
         
@@ -147,22 +145,22 @@ case $test_choice in
         
         read -p "请输入选项 (1-5): " site_choice
         
-        echo ""
-        read -p "运行次数 (默认 3): " runs
+        read -p "请输入运行次数 (默认 3): " runs
+        runs=${runs:-3}
+        
+        read -p "请输入运行次数 (默认 3): " runs
         runs=${runs:-3}
         
         if [ "$site_choice" = "5" ]; then
             read -p "请输入 URL: " custom_url
-            run_compare "$custom_url" "自定义网站" $runs
-        else
+            run_compare "$custom_url" "自定义网站" "$runs"
+        elif [ "$site_choice" -ge 1 ] && [ "$site_choice" -le ${#SITES[@]} ]; then
             idx=$((site_choice-1))
-            if [ $idx -ge 0 ] && [ $idx -lt ${#SITES[@]} ]; then
-                IFS=':' read -r url name <<< "${SITES[$idx]}"
-                run_compare "$url" "$name" $runs
-            else
-                echo -e "${RED}❌ 无效选项${NC}"
-                exit 1
-            fi
+            IFS=':' read -r url name <<< "${SITES[$idx]}"
+            run_compare "$url" "$name" "$runs"
+        else
+            echo -e "${RED}❌ 无效选项${NC}"
+            exit 1
         fi
         ;;
         
