@@ -470,6 +470,50 @@ def config_validate(filepath: str):
 
 
 @cli.command()
+def uninstall():
+    """
+    Uninstall Playwright browsers (proxy to playwright uninstall).
+    
+    Example:
+        playwright-enhance-cli uninstall
+    """
+    import subprocess
+    try:
+        subprocess.run(['playwright', 'uninstall'], check=True)
+    except subprocess.CalledProcessError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except FileNotFoundError:
+        click.echo("Error: 'playwright' command not found. Please install Playwright first.", err=True)
+        sys.exit(1)
+
+
+@cli.command('show-trace')
+@click.argument('trace', required=False)
+def show_trace(trace: Optional[str]):
+    """
+    Show trace viewer (proxy to playwright show-trace).
+    
+    Examples:
+        playwright-enhance-cli show-trace
+        playwright-enhance-cli show-trace trace.zip
+    """
+    import subprocess
+    cmd = ['playwright', 'show-trace']
+    if trace:
+        cmd.append(trace)
+    
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except FileNotFoundError:
+        click.echo("Error: 'playwright' command not found. Please install Playwright first.", err=True)
+        sys.exit(1)
+
+
+@cli.command()
 def info():
     """
     Show system and installation information.
